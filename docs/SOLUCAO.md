@@ -291,28 +291,28 @@ Código: `services/route_optimizer.py`.
 ### Visão geral
 
 ```
-┌─ navegador (celular ou computador) ────────────────────────────────────┐
+┌─ visitante (celular ou computador) ────────────────────────────────────┐
+│ Site na Vercel (https://doacerto.vercel.app)                           │
 │ Next.js 15 · React 19 · Tailwind · Leaflet (OpenStreetMap)             │
 │ Web Speech API: voz vira texto no próprio aparelho, custo zero         │
-└────────────────────────────────────────────────────────────────────────┘
-                                     │ https
-              Tailscale Funnel (link fixo, HTTPS automático)
-                                     │
-┌─ seu PC ───────────────────────────────────────────────────────────────┐
-│ Site (next start, 127.0.0.1:3100)                                      │
-│   └─ /api/* ─▶ API FastAPI (127.0.0.1:8100)                            │
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   │ /api/* (rewrite sem expor CORS)
+                                   ▼
+┌─ nuvem (Render - plano gratuito) ──────────────────────────────────────┐
+│ API FastAPI (Python 3.12, Uvicorn)                                     │
 │                                                                        │
 │ routes/    finas: validam e delegam                                    │
 │ services/  extracao · cascata · evidencia · anonimizacao               │
 │            urgencia · matching · clima · voice_agent                   │
 │            predictive_radar · route_optimizer · geocoding              │
 │ llm/       LLMClient plugável (Gemini · OpenAI · offline)              │
-│ banco      SQLite via SQLAlchemy 2 (Postgres trocando DATABASE_URL)    │
+│ banco      SQLite com seed automático ao iniciar                       │
 └────────────────────────────────────────────────────────────────────────┘
         │                 │                 │                 │
       Gemini          Open-Meteo        Nominatim            OSRM
   (texto → JSON)    (previsão 24h)      (endereço)     (rota nas ruas)
 ```
+*(Também suporta execução do próprio PC via Tailscale Funnel para contingência).*
 
 ### Tecnologias
 
@@ -321,12 +321,12 @@ Código: `services/route_optimizer.py`.
 | Front-end | Next.js 15, React 19, TypeScript, Tailwind 3.4 | Rápido de construir, responsivo, tipado de ponta a ponta |
 | Mapas | Leaflet 1.9 + react-leaflet 5, tiles OpenStreetMap | Gratuito, sem chave |
 | Back-end | FastAPI, Pydantic v2, SQLAlchemy 2, httpx | Validação forte, documentação automática em `/docs` |
-| Banco | SQLite | Zero configuração na demo; migra para Postgres/PostGIS |
+| Banco | SQLite | Zero configuração na demo; seed_ao_iniciar recarrega na nuvem efêmera |
 | IA | Gemini Flash-Lite (`gemini-3.5-flash-lite`) | Barato, rápido, bom em JSON estruturado |
 | Clima | Open-Meteo | Gratuito, sem chave, previsão horária |
 | Endereço | Dicionário por cidade → Nominatim → centro da cidade | Rápido e gratuito; o operador corrige arrastando o marcador |
 | Rota | OSRM público | Rota real nas ruas, sem custo |
-| Publicação | PC próprio + Tailscale Funnel + tarefa agendada do Windows | Link fixo e gratuito, volta sozinho depois de reiniciar |
+| Publicação | Vercel (front-end) + Render (API) + GitHub Actions | Link fixo público (https://doacerto.vercel.app), deploys automáticos via git |
 
 ### Tudo tem plano B
 
@@ -351,12 +351,11 @@ Código: `services/route_optimizer.py`.
 
 ### Publicação e segurança do site público
 
-- Uma só origem: o site repassa `/api/*` para a API local. Só o site fica exposto, sem CORS.
-- Produção com portas e banco próprios (3100/8100), separada do ambiente de desenvolvimento.
-- Limite de 20 mensagens por minuto por visitante nas rotas com IA. O IP vem do Tailscale, que
-  descarta cabeçalhos forjados.
-- Teto diário de chamadas à IA, que protege a chave; acima dele, regras locais.
-- "Reiniciar demo" exige token de administrador.
+- Uma só origem: a Vercel repassa `/api/*` diretamente para a API no Render via rewrite. Só a Vercel fica exposta publicamente para o visitante, sem risco de CORS.
+- Detecção precisa de IP contra abusos (`PROXIES_CONFIAVEIS=2`): a Vercel adiciona o IP do visitante e o Render acrescenta o da Vercel; a API extrai o penúltimo IP para aplicar o limite de taxa de 20 req/min por visitante.
+- Ping automático a cada 10 minutos via GitHub Actions para manter o Render acordado e responsivo para o júri.
+- Teto diário de chamadas à IA, que protege a chave; acima dele, regras locais assumem sem quebrar a demo.
+- "Reiniciar demo" exige token de administrador gerado no ambiente (`ADMIN_TOKEN`).
 
 ---
 
@@ -364,7 +363,7 @@ Código: `services/route_optimizer.py`.
 
 | Verificação | Resultado |
 |---|---|
-| Testes automatizados da API (sem rede) | **61 passando** |
+| Testes automatizados da API (sem rede) | **63 passando** |
 | Avaliação da leitura de mensagens | **37/37** com IA (19/37 só com regras) |
 | Contrato API × TypeScript | 32 interfaces conferidas contra respostas reais nas 3 cidades |
 | Tipos do front-end | `tsc --noEmit` sem erros |

@@ -172,7 +172,36 @@ arrastando o marcador) · `GET /ops/radar?cenario=normal|frente_fria|tempestade|
 A rota sai da tela: o painel tem **Maps** (link do Google Maps com as paradas na ordem),
 **WhatsApp** (roteiro em texto) e **Copiar**.
 
-## Publicar com link fixo (Tailscale Funnel)
+## Publicar na nuvem (link fixo, sem depender do PC)
+
+É o link para enviar ao júri: continua no ar com o seu PC desligado.
+
+```
+visitante ──https──▶ site na Vercel (doacerto.vercel.app) ──/api/*──▶ API no Render (gratuito)
+```
+
+1. **API no Render.** Em [render.com](https://render.com), entre com o GitHub e clique em
+   *New → Blueprint*. Escolha este repositório: o `render.yaml` já tem tudo. O Render pede a
+   `LLM_API_KEY` (chave do Gemini). Ao terminar, anote o endereço da API
+   (ex.: `https://doacerto-api.onrender.com`). O `ADMIN_TOKEN` é gerado sozinho e fica em
+   *Environment*.
+2. **Site na Vercel.** Em [vercel.com](https://vercel.com), entre com o GitHub, *Add New →
+   Project* e importe o repositório. Em *Root Directory* escolha `web`. Em *Environment
+   Variables* crie `API_INTERNA_URL` com o endereço da API do passo 1. Clique em *Deploy*.
+   Dê ao projeto o nome `doacerto` para o link ser `https://doacerto.vercel.app`.
+3. **Manter acordada.** O workflow `.github/workflows/manter-api-acordada.yml` chama
+   `/api/health` a cada 10 minutos. Se o link da Vercel for outro, crie a variável `URL_SITE`
+   em *Settings → Secrets and variables → Actions → Variables* do GitHub.
+
+Como funciona: a API sobe já com os dados de demonstração (`SEED_AO_INICIAR=true`), porque o
+disco do Render gratuito é apagado a cada reinício. O limite por visitante usa o penúltimo IP do
+`X-Forwarded-For` (`PROXIES_CONFIAVEIS=2`): a Vercel põe o IP do visitante e o Render acrescenta o
+da Vercel. Cada `git push` no `main` atualiza o site e a API sozinhos.
+
+**Limites honestos:** no plano gratuito, se a API dormir mesmo assim, o primeiro acesso leva cerca
+de 1 minuto. Os dados criados durante a demo somem quando a API reinicia.
+
+## Publicar do próprio PC (Tailscale Funnel)
 
 O site roda no seu PC e fica público num endereço que não muda, nem depois de reiniciar:
 `https://<nome-da-maquina>.<sua-rede>.ts.net`.
