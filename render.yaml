@@ -1,0 +1,29 @@
+# API do Doa Certo no Render (plano gratuito). O site fica na Vercel e repassa /api/* para cá.
+# No Render: New → Blueprint → escolha este repositório. Ele pede a LLM_API_KEY (chave do Gemini).
+services:
+  - type: web
+    name: doacerto-api
+    runtime: python
+    plan: free
+    region: virginia
+    rootDir: api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: ENVIRONMENT
+        value: production
+      # O disco do plano gratuito é apagado a cada reinício: a API sobe já com a demo carregada.
+      - key: SEED_AO_INICIAR
+        value: "true"
+      # Vercel acrescenta o IP do visitante e o Render acrescenta o da Vercel.
+      - key: PROXIES_CONFIAVEIS
+        value: "2"
+      # Token de "Reiniciar demo": o Render gera e mostra no painel (Environment).
+      - key: ADMIN_TOKEN
+        generateValue: true
+      # Chave do Gemini: o Render pede na criação e guarda como segredo.
+      - key: LLM_API_KEY
+        sync: false
