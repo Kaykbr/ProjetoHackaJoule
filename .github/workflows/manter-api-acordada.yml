@@ -1,5 +1,5 @@
-# O Render gratuito "dorme" depois de 15 min sem acesso, e o primeiro acesso leva ~1 min.
-# Este ping passa pelo link público (Vercel → Render) e mantém a API acordada para o júri.
+# Confere o link público a cada 10 min. Com o site no PC (Tailscale), uma falha aqui avisa por
+# e-mail que o PC desligou ou perdeu a internet. Na nuvem (Render), também evita que a API durma.
 name: Manter API acordada
 
 on:
@@ -13,6 +13,6 @@ jobs:
     steps:
       - name: Chamar /api/health
         env:
-          URL_SITE: ${{ vars.URL_SITE || 'https://doacerto.vercel.app' }}
+          URL_SITE: ${{ vars.URL_SITE || 'https://doacerto.tailc7bf84.ts.net' }}
         run: |
           curl --silent --show-error --max-time 90 --retry 2 --retry-delay 20 "$URL_SITE/api/health"

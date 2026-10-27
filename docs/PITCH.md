@@ -66,8 +66,8 @@ Abra *Sou ONG → Central de operações* (ou `/operacao`).
 central com `?admin=<token de scripts/.admin-token>` e clique em *Reiniciar demo* em cada cidade).
 Deixe a simulação de clima desligada. Localmente: `python -m app.seed` ou `./start_demo.sh --reset`.
 
-**Link para o júri:** https://doacerto.vercel.app (na nuvem com Vercel + Render; ver README).
-Também pode rodar localmente no PC com Tailscale Funnel se necessário.
+**Link para o júri:** https://doacerto.tailc7bf84.ts.net (do próprio PC, via Tailscale Funnel; ver
+README). Confira que o PC não vai desligar nem suspender.
 
 ## Perguntas prováveis do júri
 
