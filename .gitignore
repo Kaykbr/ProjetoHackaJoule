@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.db
+.env
+
+# Node
+node_modules/
+.next/
+*.tsbuildinfo
+.env.local
+
+# Publicação (scripts/servir.ps1)
+.next-prod/
+logs/
+scripts/.admin-token
+
+# Editor/agente local
+.claude/
