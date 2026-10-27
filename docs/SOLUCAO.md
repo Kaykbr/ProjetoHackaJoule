@@ -216,7 +216,7 @@ A página **Transparência** (`/transparencia`) mostra, ao vivo, como cada mensa
 pela IA, por regras, pelo cache ou pelo fallback; quantos itens sem evidência foram barrados;
 quantos dados pessoais foram removidos; tokens e custo por chamada.
 
-**Avaliação com 37 mensagens reais e armadilhas** (negação, Pix, voluntários, números de
+**Avaliação com 37 mensagens escritas no estilo das ONGs, doadores e voluntários, cheias de armadilhas** (negação, Pix, voluntários, números de
 endereço, dúzias, relatos em espanhol, tentativas de injeção):
 
 | Leitura | Acertos | Chamadas à IA | Tokens |
