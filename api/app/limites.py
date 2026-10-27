@@ -23,14 +23,15 @@ _acessos: dict[str, deque[float]] = defaultdict(deque)
 
 
 def ip_do_cliente(request: Request) -> str:
-    """IP real do visitante, no X-Forwarded-For posto pelo Tailscale Funnel.
+    """IP real do visitante, contado a partir do FIM do X-Forwarded-For.
 
-    Vale o ÚLTIMO valor: é o que o proxy acrescentou. Os anteriores vêm do próprio visitante
-    e podem ser inventados (o Next repassa o cabeçalho sem mexer).
+    Cada proxy confiável acrescenta um IP no fim; os valores antes deles vêm do próprio visitante
+    e podem ser inventados. Com `PROXIES_CONFIAVEIS=N`, o visitante é o N-ésimo a partir do fim
+    (1 com o Tailscale Funnel; 2 com Vercel + Render).
     """
-    encaminhado = request.headers.get("x-forwarded-for", "")
+    encaminhado = [ip.strip() for ip in request.headers.get("x-forwarded-for", "").split(",") if ip.strip()]
     if encaminhado:
-        return encaminhado.split(",")[-1].strip()
+        return encaminhado[-min(max(1, settings.proxies_confiaveis), len(encaminhado))]
     return request.client.host if request.client else "desconhecido"
 
 

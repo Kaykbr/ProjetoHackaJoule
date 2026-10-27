@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     limite_ia_por_minuto: int = 20
     #: Com valor, /ops/reset exige o cabeçalho X-Admin-Token (use no site público).
     admin_token: str = ""
+    #: Quantos proxies confiáveis acrescentam um IP ao X-Forwarded-For antes da API:
+    #: 1 no PC com Tailscale Funnel; 2 na nuvem (Vercel acrescenta o visitante, Render a Vercel).
+    proxies_confiaveis: int = 1
+    #: Carrega os dados de demonstração ao subir com o banco vazio (nuvem com disco efêmero).
+    seed_ao_iniciar: bool = False
     #: Regras locais resolvem a mensagem simples; o LLM só recebe a ambígua.
     cascata_enabled: bool = True
     #: Mesma mensagem no mesmo dia reaproveita o resultado já validado.

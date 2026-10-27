@@ -121,3 +121,23 @@ def test_reset_exige_token_quando_configurado(client: TestClient, monkeypatch: p
     assert client.post("/ops/reset").status_code == 403
     assert client.post("/ops/reset", headers={"X-Admin-Token": "errado"}).status_code == 403
     assert client.post("/ops/reset", headers={"X-Admin-Token": "segredo-da-demo"}).status_code == 200
+
+
+def test_atras_de_vercel_e_render_vale_o_penultimo_ip(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Vercel põe o visitante; o Render acrescenta o IP da Vercel no fim.
+    monkeypatch.setattr(settings, "proxies_confiaveis", 2)
+    monkeypatch.setattr(settings, "limite_ia_por_minuto", 1)
+    corpo = {"texto": "precisamos de 10 cobertores"}
+    assert client.post("/demandas/extrair", json=corpo, headers={"X-Forwarded-For": "7.7.7.7, 76.76.21.1"}).status_code == 200
+    # Outro visitante, mesmo IP da Vercel: não é bloqueado.
+    assert client.post("/demandas/extrair", json=corpo, headers={"X-Forwarded-For": "8.8.8.8, 76.76.21.1"}).status_code == 200
+    assert client.post("/demandas/extrair", json=corpo, headers={"X-Forwarded-For": "7.7.7.7, 76.76.21.1"}).status_code == 429
+
+
+def test_diagnostico_de_ip_so_com_token(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "admin_token", "segredo-da-demo")
+    monkeypatch.setattr(settings, "proxies_confiaveis", 2)
+    cab = {"X-Forwarded-For": "7.7.7.7, 76.76.21.1"}
+    assert "ip_detectado" not in client.get("/health", headers=cab).json()
+    corpo = client.get("/health", headers={**cab, "X-Admin-Token": "segredo-da-demo"}).json()
+    assert corpo["ip_detectado"] == "7.7.7.7"

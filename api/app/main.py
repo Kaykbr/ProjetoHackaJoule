@@ -1,11 +1,12 @@
 """Entrypoint da API do Doa Certo."""
 from __future__ import annotations
 
+import secrets
 import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Header, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,16 +15,32 @@ from loguru import logger
 
 from app.config import settings
 from app.database import init_db
-from app.limites import LimiteIA
+from app.limites import LimiteIA, ip_do_cliente
 from app.routes import clima, demandas, doacoes, ongs, ops
 
 logger.remove()
 logger.add(sys.stderr, level="INFO", format="<green>{time:HH:mm:ss}</green> | {level: <8} | {message}")
 
 
+def _seed_se_vazio() -> None:
+    """Na nuvem o disco some a cada reinício: sobe já com os dados de demonstração."""
+    from sqlalchemy import func, select
+
+    from app import seed
+    from app.database import SessionLocal
+    from app.models import Ong
+
+    with SessionLocal() as db:
+        vazio = not db.scalar(select(func.count(Ong.id)))
+    if vazio:
+        seed.run()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     init_db()
+    if settings.seed_ao_iniciar:
+        _seed_se_vazio()
     logger.info(
         "Doa Certo API pronta | db={} | llm={} | clima={}",
         settings.database_url.split("://")[0],
@@ -66,13 +83,18 @@ async def validation_handler(request: Request, exc: RequestValidationError) -> J
 
 
 @app.get("/health", tags=["meta"])
-def health() -> dict:
-    return {
+def health(request: Request, x_admin_token: str | None = Header(default=None)) -> dict:
+    corpo = {
         "status": "ok",
         "app": settings.app_name,
         "llm_enabled": settings.llm_enabled,
         "clima_enabled": settings.clima_enabled,
     }
+    # Diagnóstico do proxy, só para quem tem o token: confere se o limite por IP vê o visitante.
+    if settings.admin_token and secrets.compare_digest(x_admin_token or "", settings.admin_token):
+        corpo["ip_detectado"] = ip_do_cliente(request)
+        corpo["x_forwarded_for"] = request.headers.get("x-forwarded-for", "")
+    return corpo
 
 
 app.include_router(ongs.router)
