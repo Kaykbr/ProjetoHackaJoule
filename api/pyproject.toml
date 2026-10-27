@@ -1,0 +1,23 @@
+[project]
+name = "doa-certo-api"
+version = "0.1.0"
+description = "API do Doa Certo — doações direcionadas para quem está em situação de rua"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --tb=short"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["B008"]  # Depends() no default de parâmetro é o padrão do FastAPI
+
+[tool.ruff.lint.per-file-ignores]
+"app/seed.py" = ["E501"]
+"tests/*" = ["E501"]
