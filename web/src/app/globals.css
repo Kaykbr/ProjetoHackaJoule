@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-[15px] leading-relaxed text-ink antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight text-ink;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-canvas;
+  }
+
+  ::selection {
+    @apply bg-brand-soft text-brand-dark;
+  }
+}
+
+@layer components {
+  .container-pg {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.08em] text-muted;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-[15px] text-ink placeholder:text-faint transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20;
+  }
+
+  .panel {
+    @apply rounded-xl border border-line bg-surface;
+  }
+
+  .link {
+    @apply font-medium text-brand underline decoration-brand/30 underline-offset-4 hover:decoration-brand;
+  }
+}
+
+/* Leaflet: mantém o mapa abaixo de header, sheet e toasts. */
+.leaflet-container {
+  z-index: 0;
+  font-family: var(--font-sans);
+  background: #f2efe9;
+}
+
+/*
+ * Base de mapa neutra e quente: tira a cor do OSM sem afetar os marcadores.
+ * O filtro fica em cada tile, não na camada inteira: na camada, cada tile que entrava com fade
+ * obrigava o navegador a refiltrar o mapa todo, e arrastar ficava travado.
+ */
+.leaflet-tile {
+  filter: grayscale(1) sepia(0.12) brightness(1.05) contrast(0.9);
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+.marcador-ponto {
+  background: transparent;
+  border: 0;
+}
+
+/* Central de operações: mapa escuro a partir dos tiles do OSM (sem chave de API). */
+.mapa-escuro.leaflet-container {
+  background: #0a0f1a;
+}
+
+.mapa-escuro .leaflet-tile {
+  filter: invert(1) hue-rotate(185deg) brightness(0.82) contrast(0.92) saturate(0.35);
+}
+
+.mapa-escuro .leaflet-control-attribution {
+  background: rgb(10 15 26 / 0.75);
+  color: #8c9bb5;
+}
+
+.mapa-escuro .leaflet-control-attribution a {
+  color: #a5b4cf;
+}
+
+.mapa-escuro .leaflet-bar a {
+  background: #0f1726;
+  color: #e5ecf6;
+  border-color: #1f2b42;
+}
+
+.mapa-escuro .leaflet-tooltip {
+  background: #0f1726;
+  color: #e5ecf6;
+  border: 1px solid #1f2b42;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.4);
+}
+
+.mapa-escuro .leaflet-tooltip-top::before {
+  border-top-color: #1f2b42;
+}
+
+/* Anel que pulsa em volta de pontos novos ou críticos. */
+.anel-pulso {
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  animation: anel-pulso 1.6s ease-out infinite;
+}
+
+@keyframes anel-pulso {
+  from {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
